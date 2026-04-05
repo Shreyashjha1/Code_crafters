@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Job Seeker Dashboard</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f4f7f8;
+        }
+
+        .navbar {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 22px;
+        }
+
+        .card {
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #218838);
+        }
+
+        /* 🤖 BUTTON */
+        #chatbot-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            padding: 14px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* 💬 CHATBOX */
+        #chatbot-box {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 320px;
+            height: 450px;
+            background: white;
+            border-radius: 12px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+        }
+
+        #chat-header {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        #chatbox {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .message {
+            display: flex;
+            margin: 6px 0;
+        }
+
+        .user { justify-content: flex-end; }
+        .bot { justify-content: flex-start; }
+
+        .bubble {
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 75%;
+        }
+
+        .user .bubble {
+            background: #007bff;
+            color: white;
+        }
+
+        .bot .bubble {
+            background: #e9ecef;
+        }
+
+        #typing {
+            display: none;
+            font-size: 12px;
+            padding: 5px;
+            color: gray;
+        }
+
+        #input-container {
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #ccc;
+            padding: 8px;
+            gap: 8px;
+        }
+
+        #micBtn {
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        #micBtn.active {
+            background: red;
+            color: white;
+        }
+
+        #userInput {
+            border: none;
+            outline: none;
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark bg-dark px-4">
+    <span class="navbar-brand">AI Resume Analyzer</span>
+    <a href="/logout" class="btn btn-danger">Logout</a>
+</nav>
+
+<div class="container mt-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-success text-center">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <h2 class="text-center mb-4">💼 Available Jobs</h2>
+
+    <form action="/upload_resume" method="POST" enctype="multipart/form-data">
+
+        {% for job in jobs %}
+        <div class="card mb-4 shadow p-4">
+
+            <!-- ✅ FIXED INDEXES -->
+            <h4>{{ job[1] }}</h4> <!-- company -->
+            <p>Role: {{ job[2] }}</p>
+            <p>Skills: {{ job[3] }}</p>
+            <p>{{ job[4] }}</p>
+            <p class="text-danger">Apply Before: {{ job[5] }}</p>
+
+            <!-- ✅ CORRECT JOB ID -->
+            <input type="radio" name="job_id" value="{{ job[0] }}" required>
+
+            <!-- ✅ CORRECT SKILLS -->
+            <input type="hidden" name="job_skills" value="{{ job[3] }}">
+
+        </div>
+        {% endfor %}
+
+        <input type="file" name="resume" class="form-control mb-3" required>
+        <button class="btn btn-success w-100">Upload & Match</button>
+    </form>
+</div>
+
+<!-- 🤖 BUTTON -->
+<div id="chatbot-btn" onclick="toggleChat()">🤖</div>
+
+<!-- 💬 CHATBOX -->
+<div id="chatbot-box">
+    <div id="chat-header">
+        AI Assistant
+        <span onclick="toggleChat()" style="float:right;cursor:pointer;">✖</span>
+    </div>
+
+    <div id="chatbox"></div>
+    <div id="typing">Bot is typing...</div>
+
+    <div id="input-container">
+        <span id="micBtn" onclick="startListening()">🎤</span>
+        <input type="text" id="userInput" placeholder="Ask something...">
+    </div>
+</div>
+
+<script>
+function toggleChat() {
+    const box = document.getElementById("chatbot-box");
+    box.style.display = box.style.display === "flex" ? "none" : "flex";
+}
+
+const input = document.getElementById("userInput");
+const chatbox = document.getElementById("chatbox");
+const typing = document.getElementById("typing");
+const micBtn = document.getElementById("micBtn");
+
+let recognition;
+let isListening = false;
+
+// ✅ TEXT TO SPEECH (BOT SPEAKS)
+function speak(text) {
+    window.speechSynthesis.cancel();
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "en-IN";
+    speech.rate = 1;
+    window.speechSynthesis.speak(speech);
+}
+
+// ✅ SEND MESSAGE
+function sendMessage(message) {
+
+    chatbox.innerHTML += `
+        <div class="message user">
+            <div class="bubble">${message}</div>
+        </div>
+    `;
+
+    typing.style.display = "block";
+
+    fetch("/chatbot", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message: message})
+    })
+    .then(res => res.json())
+    .then(data => {
+        typing.style.display = "none";
+
+        chatbox.innerHTML += `
+            <div class="message bot">
+                <div class="bubble">${data.response}</div>
+            </div>
+        `;
+
+        // 🔊 SPEAK RESPONSE
+        speak(data.response);
+
+        chatbox.scrollTop = chatbox.scrollHeight;
+    })
+    .catch(() => {
+        typing.style.display = "none";
+
+        chatbox.innerHTML += `
+            <div class="message bot">
+                <div class="bubble">⚠ Server error</div>
+            </div>
+        `;
+    });
+}
+
+// ✅ ENTER KEY
+input.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        let msg = input.value.trim();
+        if (msg !== "") {
+            input.value = "";
+            sendMessage(msg);
+        }
+    }
+});
+
+// 🎤 VOICE INPUT (MAIN FEATURE)
+function startListening() {
+
+    if (isListening) {
+        recognition.stop();
+        isListening = false;
+        micBtn.classList.remove("active");
+        return;
+    }
+
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-IN";
+    recognition.interimResults = false;
+
+    recognition.start();
+    isListening = true;
+    micBtn.classList.add("active");
+
+    recognition.onresult = function(event) {
+        let text = event.results[0][0].transcript;
+
+        // put into input box (optional)
+        input.value = text;
+
+        sendMessage(text);
+    };
+
+    recognition.onerror = function() {
+        isListening = false;
+        micBtn.classList.remove("active");
+        alert("🎤 Voice recognition error");
+    };
+
+    recognition.onend = function() {
+        isListening = false;
+        micBtn.classList.remove("active");
+    };
+}
+</script>
+<script>
+setTimeout(() => {
+  document.querySelectorAll(".alert").forEach(el => el.style.display = "none");
+}, 3000);
+</script>
+
+</body>
+</html>

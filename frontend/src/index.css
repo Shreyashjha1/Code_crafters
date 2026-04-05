@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 22% 95%;
+    --foreground: 220 24% 18%;
+    --card: 40 18% 98%;
+    --card-foreground: 220 24% 18%;
+    --primary: 192 52% 42%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 35 42% 90%;
+    --secondary-foreground: 28 34% 26%;
+    --muted: 210 22% 92%;
+    --muted-foreground: 215 14% 41%;
+    --accent: 156 24% 89%;
+    --accent-foreground: 161 40% 24%;
+    --border: 214 18% 84%;
+    --input: 214 18% 84%;
+    --ring: 192 52% 42%;
+  }
+
+  .dark {
+    --background: 220 18% 14%;
+    --foreground: 210 22% 91%;
+    --card: 220 18% 18%;
+    --card-foreground: 210 22% 91%;
+    --primary: 192 46% 60%;
+    --primary-foreground: 220 24% 16%;
+    --secondary: 218 14% 22%;
+    --secondary-foreground: 210 22% 91%;
+    --muted: 218 14% 20%;
+    --muted-foreground: 215 12% 72%;
+    --accent: 156 20% 22%;
+    --accent-foreground: 154 36% 84%;
+    --border: 217 14% 28%;
+    --input: 217 14% 28%;
+    --ring: 192 46% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased transition-colors duration-300;
+    font-family: "Space Grotesk Variable", "Segoe UI", sans-serif;
+  }
+
+  ::selection {
+    @apply bg-primary/25 text-foreground;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: "Fraunces", Georgia, serif;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply border border-border/80 bg-card/80 backdrop-blur-xl;
+  }
+}

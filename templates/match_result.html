@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Match Results</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            text-align: center;
+            font-size: 50px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+
+        .progress {
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #28a745;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            width: 0%;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .matched li {
+            background: #e6f4ea;
+            color: #2e7d32;
+        }
+
+        .missing li {
+            background: #fdecea;
+            color: #c62828;
+        }
+
+        .suggestions li {
+            background: #e3f2fd;
+            color: #0d47a1;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        #chart-container {
+            margin-top: 30px;
+        }
+
+        .apply-btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .apply-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>📊 Resume Match Result</h2>
+
+    <!-- 🔵 SCORE -->
+    <div class="score">{{ score }}%</div>
+
+    <!-- 🔵 PROGRESS BAR -->
+    <div class="progress">
+        <div class="progress-bar" id="progressBar">
+            {{ score }}%
+        </div>
+    </div>
+
+    <!-- 🟢 MATCHED SKILLS -->
+    <div class="section-title">✔ Matched Skills</div>
+    <ul class="matched">
+        {% for s in matched %}
+        <li>
+            {% if s.name %}
+                {{ s.name }} → Score: {{ s.score }}
+            {% else %}
+                {{ s }}
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- 🔴 MISSING -->
+    <div class="section-title">❌ Missing Skills</div>
+    <ul class="missing">
+        {% for s in missing %}
+        <li>{{ s }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- 🔵 SUGGESTIONS -->
+    <div class="section-title">💡 Suggestions</div>
+    <ul class="suggestions">
+        {% for s in suggestions %}
+        <li>{{ s }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- 🔥 APPLY BUTTON -->
+    {% if score > 0 %}
+    <form action="/apply_job" method="POST">
+        <input type="hidden" name="job_id" value="{{ job_id }}">
+        <input type="hidden" name="score" value="{{ score }}">
+        <input type="hidden" name="resume_name" value="{{ filename }}">
+        <button type="submit" class="apply-btn">🚀 Apply for Job</button>
+    </form>
+    {% else %}
+    <p style="text-align:center;color:red;margin-top:15px;">
+        ❌ Improve your skills before applying
+    </p>
+    {% endif %}
+
+    <!-- 🔵 GRAPH -->
+    <div id="chart-container">
+        <canvas id="chart"></canvas>
+    </div>
+
+</div>
+
+<script>
+    // 🔥 PROGRESS BAR ANIMATION
+    const score = Number("{{ score }}");
+    const bar = document.getElementById("progressBar");
+
+    setTimeout(() => {
+        bar.style.transition = "width 1s ease";
+        bar.style.width = score + "%";
+    }, 200);
+
+    // 🔥 TOP 5 GRAPH DATA (FROM BACKEND)
+    const names = JSON.parse('{{ names | tojson | safe if names else "[]" }}');
+    const scores = JSON.parse('{{ scores | tojson | safe if scores else "[]" }}');
+
+    const ctx = document.getElementById("chart").getContext("2d");
+
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: names.length ? names : ["Match Score"],
+            datasets: [{
+                label: "Match Score",
+                data: scores.length ? scores : [score],
+                backgroundColor: "#36a2eb",
+                borderRadius: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
