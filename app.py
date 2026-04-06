@@ -321,7 +321,10 @@ def match_result():
 
 from groq import Groq
 # Initialize Groq client
-groq_client = Groq(api_key="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")
+import os
+from groq import Groq
+
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
