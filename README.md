@@ -3,7 +3,7 @@ AI-Based Resume Analyzer & Job Matching System
 LIVE LINK : https://code-crafters-vbsl.onrender.com
 
 Problem Statement:
-In modern recruitment, Applicant Tracking Systems (ATS) often reject resumes early due to missing keywords, skill mismatches, or poor formatting, even when candidates are qualified. Job seekers lack feedback on resume suitability and skill gaps, while recruiters face time-consuming manual filtering, leading to inefficiencies and missed opportunities.
+In This modern recruitment, Applicant Tracking Systems (ATS) often reject resumes early due to missing keywords, skill mismatches, or poor formatting, even when candidates are qualified. Job seekers lack feedback on resume suitability and skill gaps, while recruiters face time-consuming manual filtering, leading to inefficiencies and missed opportunities.
 
 Objective:
 Automate resume screening and candidate-job matching by extracting key information using NLP and machine learning, computing match scores, ranking candidates, and providing actionable feedback to both job seekers and recruiters.
